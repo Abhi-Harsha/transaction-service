@@ -1,14 +1,34 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
 
 type ServerConfig struct {
-	Host string
-	Port int
+	Host    string
+	Port    int
+	GinMode string
+}
+
+type Logger struct {
+	Level string
+}
+
+func (l Logger) GetZapLevel() zapcore.Level {
+	levelMap := make(map[string]zapcore.Level)
+	levelMap["debug"] = zap.DebugLevel
+	levelMap["info"] = zap.InfoLevel
+	levelMap["warn"] = zap.WarnLevel
+	levelMap["error"] = zap.ErrorLevel
+
+	return levelMap[l.Level]
 }
 
 type AppConfig struct {
-	ServerConfig ServerConfig
+	Server ServerConfig
+	Logger Logger
 }
 
 func check(err error) {
@@ -24,7 +44,9 @@ func NewAppConfig(config string) AppConfig {
 }
 
 func loadConfigFile(config string) error {
-	viper.AddConfigPath(config)
+	viper.SetConfigType("yaml")
+	viper.SetConfigFile(config)
+	viper.AutomaticEnv()
 	return viper.ReadInConfig()
 }
 
